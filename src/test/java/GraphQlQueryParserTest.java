@@ -97,4 +97,24 @@ public class GraphQlQueryParserTest
 
         assertThat(actualQuery, is(equalTo("query{getPost{postId postTitle postText postDatePublished postViews postLikes comments{commentsId commentsText commentsDatePublished author{authorId authorName authorEmail authorProfilePicture authorJoinedDate friends{friendsId friendsName friendsProfilePicture mutualFriends{mutualFriendsId mutualFriendsName}}}} popularity{likes dislikes}}}")));
     }
+
+    @Test
+    // ultimo no folha
+    public void When_First_And_Last_Fields_Each_Without_Children_Selected_Then_Query_With_First_And_Last_Fields_Each_Without_Children11()
+    {
+        final GetPostQuery getPostQuery = new GetPostQuery()
+                .fromComments()
+                    .fromAuthor()
+                        .fromFriends()
+                            .fromMutualFriends()
+                                .selectMutualFriendsId()
+                            .endMutualFriendsSelection()
+                        .endFriendsSelection()
+                    .endAuthorSelection()
+                .endCommentsSelection()
+            .endSelection();
+        final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
+
+        assertThat(actualQuery, is(equalTo("query{getPost{comments{author{friends{mutualFriends{mutualFriendsId}}}}}}")));
+    }
 }

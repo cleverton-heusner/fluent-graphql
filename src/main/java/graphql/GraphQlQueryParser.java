@@ -9,75 +9,43 @@ import java.util.stream.Collectors;
 
 public class GraphQlQueryParser {
 
+    private static final byte ROOT_NODE_PARAM = 0;
+    private static final byte SUBTREE_PARENT_PARAM = 0;
+    private static final byte SUBTREE_PARAM = 1;
+
     private static final String NO_SELECTED_NODES = "";
     private static final String ROOT_BEAN_NAME_SUFFIX = "Query";
     private static final String SPACE_BETWEEN_SELECTED_NODES = " ";
 
-    public static String parse(final Object graphQlQueryBean) {
+    public static String parse(final Object ...params) {
 
-        final Class<?> rootNodeClass = graphQlQueryBean.getClass();
-        final List<Field> subTreeChildren = Arrays.asList(rootNodeClass.getDeclaredFields());
-        final String selectedChildrenNodes = retrieveSelectedNodesNames(graphQlQueryBean, subTreeChildren);
-        String parentNodeWithSelectedChildren = retrieveParentNodeWithSelectedChildren(graphQlQueryBean, subTreeChildren);
-
-        if (selectedChildrenNodes.isEmpty()) {
-            parentNodeWithSelectedChildren = parentNodeWithSelectedChildren.stripLeading();
-        }
-
-        return "query{" +
-                retrieveRootNodeName(rootNodeClass) +
-                "{" +
-                selectedChildrenNodes +
-                parentNodeWithSelectedChildren +
-                "}}";
-    }
-
-    private static String iterateSubtree(final Object subTreeParent, final Field subTreeField) {
-
-        final Object subTree = retrieveSubTreeFromParent(subTreeParent, subTreeField);
-        final Class<?> subTreeClass = subTree.getClass();
-        final List<Field> subTreeChildren = Arrays.asList(subTreeClass.getDeclaredFields());
-        final String selectedChildrenNodes = retrieveSelectedNodesNames(subTree, subTreeChildren);
-        String parentNodeWithSelectedChildren = retrieveParentNodeWithSelectedChildren(subTree, subTreeChildren);
+        final Object node = retrieveCurrentNode(params);
+        final Class<?> nodeClass = node.getClass();
+        final List<Field> nodeChildren = Arrays.asList(nodeClass.getDeclaredFields());
+        final String selectedChildrenNodes = retrieveSelectedNodesNames(node, nodeChildren);
+        String selectedParentNodeWithChildren = retrieveSelectedParentNodeWithChildren(node, nodeChildren);
 
         if (selectedChildrenNodes.isEmpty()) {
-            parentNodeWithSelectedChildren = parentNodeWithSelectedChildren.stripLeading();
+            selectedParentNodeWithChildren = selectedParentNodeWithChildren.stripLeading();
 
-            if (parentNodeWithSelectedChildren.isEmpty()) {
+            if (isSubtreeNode(params) && selectedParentNodeWithChildren.isEmpty()) {
                 return NO_SELECTED_NODES;
             }
         }
 
-        return " " +
-                retrieveParentNodeName(subTreeClass) +
-                "{" +
-                selectedChildrenNodes +
-                parentNodeWithSelectedChildren +
-                "}";
+        return formatSelectedFields(nodeClass, selectedChildrenNodes, selectedParentNodeWithChildren, params);
     }
 
-    private static Object retrieveSubTreeFromParent(final Object subTreeParent, final Field subTreeField) {
-        subTreeField.setAccessible(true);
-        try {
-            return subTreeField.get(subTreeParent);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+    private static Object retrieveCurrentNode(final Object... params) {
+        if (isRootNode(params)) {
+            return params[ROOT_NODE_PARAM];
         }
+
+        return retrieveSubtreeFromParent(params[SUBTREE_PARENT_PARAM], (Field) params[SUBTREE_PARAM]);
     }
 
-    private static String retrieveParentNodeWithSelectedChildren(final Object subTree,
-                                                                 final List<Field> subTreeChildren) {
-
-        return subTreeChildren.stream()
-                .filter(subTreeChild -> !subTreeChild.getType().equals(boolean.class))
-                .filter(subTreeChild -> !subTreeChild.getType().equals(retrieveNodeParentType(subTree)))
-                .map(childWithDescendant -> iterateSubtree(subTree, childWithDescendant))
-                .collect(Collectors.joining());
-    }
-
-    private static Type retrieveNodeParentType(final Object subTree) {
-        final Parameter[] constructors = subTree.getClass().getDeclaredConstructors()[0].getParameters();
-        return constructors.length == 0 ? null : constructors[0].getType();
+    private static boolean isRootNode(final Object... params) {
+        return params.length == 1;
     }
 
     private static String retrieveSelectedNodesNames(final Object graphQlQueryBean,
@@ -98,10 +66,36 @@ public class GraphQlQueryParser {
         }
     }
 
+    private static Object retrieveSubtreeFromParent(final Object subtreeParent, final Field subtreeNode) {
+        subtreeNode.setAccessible(true);
+        try {
+            return subtreeNode.get(subtreeParent);
+        } catch (final IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String retrieveSelectedParentNodeWithChildren(final Object subtree,
+                                                                 final List<Field> subtreeChildren) {
+        return subtreeChildren.stream()
+                .filter(subtreeChild -> !subtreeChild.getType().equals(boolean.class))
+                .filter(subtreeChild -> !subtreeChild.getType().equals(retrieveNodeParentType(subtree)))
+                .map(childWithDescendant -> parse(subtree, childWithDescendant))
+                .collect(Collectors.joining());
+    }
+
+    private static Type retrieveNodeParentType(final Object subtree) {
+        final Parameter[] constructors = subtree.getClass().getDeclaredConstructors()[0].getParameters();
+        return constructors.length == 0 ? null : constructors[0].getType();
+    }
+
+    private static boolean isSubtreeNode(final Object... params) {
+        return params.length == 2;
+    }
+
     private static String retrieveRootNodeName(final Class<?> rootNodeClass) {
         final String rootNodeName = rootNodeClass.getSimpleName();
-        return lowercase(rootNodeName)
-                .substring(0, rootNodeName.length() - ROOT_BEAN_NAME_SUFFIX.length());
+        return lowercase(rootNodeName).substring(0, rootNodeName.length() - ROOT_BEAN_NAME_SUFFIX.length());
     }
 
     private static String retrieveParentNodeName(final Class<?> rootNodeClass) {
@@ -110,5 +104,19 @@ public class GraphQlQueryParser {
     
     private static String lowercase(final String word) {
         return Character.toLowerCase(word.charAt(0)) + word.substring(1);
+    }
+
+    private static String formatSelectedFields(final Class<?> nodeClass,
+                                               final String selectedChildrenNodes,
+                                               final String selectedParentNodeWithChildren,
+                                               final Object... params) {
+
+        final boolean isRootNode = isRootNode(params);
+        final String fieldsSelectionBegin = isRootNode ? "query{" : " ";
+        final String nodeName = isRootNode ? retrieveRootNodeName(nodeClass) : retrieveParentNodeName(nodeClass);
+        final String fieldsSelectionEnd = isRootNode ? "}}" : "}";
+
+        return fieldsSelectionBegin + nodeName + "{" + selectedChildrenNodes + selectedParentNodeWithChildren +
+                fieldsSelectionEnd;
     }
 }
