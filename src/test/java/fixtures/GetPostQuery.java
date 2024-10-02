@@ -1,4 +1,4 @@
-package socialmedia;
+package fixtures;
 
 public class GetPostQuery {
 
