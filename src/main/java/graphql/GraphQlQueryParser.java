@@ -112,9 +112,9 @@ public class GraphQlQueryParser {
                                                final Object... params) {
 
         final boolean isRootNode = isRootNode(params);
-        final String fieldsSelectionBegin = isRootNode ? "query{" : " ";
+        final String fieldsSelectionBegin = isRootNode ? "{\"query\":\"query{" : " ";
         final String nodeName = isRootNode ? retrieveRootNodeName(nodeClass) : retrieveParentNodeName(nodeClass);
-        final String fieldsSelectionEnd = isRootNode ? "}}" : "}";
+        final String fieldsSelectionEnd = isRootNode ? "}}\"}" : "}";
 
         return fieldsSelectionBegin + nodeName + "{" + selectedChildrenNodes + selectedParentNodeWithChildren +
                 fieldsSelectionEnd;

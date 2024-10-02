@@ -14,7 +14,7 @@ public class GraphQlQueryParserTest
         final GetPostQuery getPostQuery = new GetPostQuery().selectPostId().endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
 
-        assertThat(actualQuery, is(equalTo("query{getPost{postId}}")));
+        assertThat(actualQuery, is(equalTo("{\"query\":\"query{getPost{postId}}\"}")));
     }
 
     @Test
@@ -26,7 +26,7 @@ public class GraphQlQueryParserTest
                 .endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
 
-        assertThat(actualQuery, is(equalTo("query{getPost{postId postTitle postText}}")));
+        assertThat(actualQuery, is(equalTo("{\"query\":\"query{getPost{postId postTitle postText}}\"}")));
     }
 
     @Test
@@ -39,7 +39,7 @@ public class GraphQlQueryParserTest
             .endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
 
-        assertThat(actualQuery, is(equalTo("query{getPost{comments{commentsId}}}")));
+        assertThat(actualQuery, is(equalTo("{\"query\":\"query{getPost{comments{commentsId}}}\"}")));
     }
 
     @Test
@@ -54,7 +54,7 @@ public class GraphQlQueryParserTest
             .endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
 
-        assertThat(actualQuery, is(equalTo("query{getPost{comments{author{authorId}}}}")));
+        assertThat(actualQuery, is(equalTo("{\"query\":\"query{getPost{comments{author{authorId}}}}\"}")));
     }
 
     @Test
@@ -69,7 +69,9 @@ public class GraphQlQueryParserTest
                 .endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
 
-        assertThat(actualQuery, is(equalTo("query{getPost{comments{commentsId commentsText commentsDatePublished}}}")));
+        assertThat(actualQuery, is(equalTo("{\"query\":\"query{getPost{comments{commentsId commentsText" +
+                " commentsDatePublished}}}\"}"))
+        );
     }
 
     @Test
@@ -83,7 +85,7 @@ public class GraphQlQueryParserTest
                 .endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
 
-        assertThat(actualQuery, is(equalTo("query{getPost{postId comments{commentsId}}}")));
+        assertThat(actualQuery, is(equalTo("{\"query\":\"query{getPost{postId comments{commentsId}}}\"}")));
     }
 
     @Test
@@ -94,7 +96,12 @@ public class GraphQlQueryParserTest
                 .endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
 
-        assertThat(actualQuery, is(equalTo("query{getPost{postId postTitle postText postDatePublished postViews postLikes comments{commentsId commentsText commentsDatePublished author{authorId authorName authorEmail authorProfilePicture authorJoinedDate friends{friendsId friendsName friendsProfilePicture mutualFriends{mutualFriendsId mutualFriendsName}}}} popularity{likes dislikes}}}")));
+        assertThat(actualQuery, is(equalTo("{\"query\":\"query{getPost{postId postTitle postText" +
+                " postDatePublished postViews postLikes comments{commentsId commentsText commentsDatePublished" +
+                " author{authorId authorName authorEmail authorProfilePicture authorJoinedDate friends{friendsId" +
+                " friendsName friendsProfilePicture mutualFriends{mutualFriendsId mutualFriendsName}}}}" +
+                " popularity{likes dislikes}}}\"}"))
+        );
     }
 
     @Test
@@ -113,6 +120,7 @@ public class GraphQlQueryParserTest
             .endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
 
-        assertThat(actualQuery, is(equalTo("query{getPost{comments{author{friends{mutualFriends{mutualFriendsId}}}}}}")));
+        assertThat(actualQuery, is(equalTo("{\"query\":\"query{getPost{comments{author{friends{mutualFriends{" +
+                "mutualFriendsId}}}}}}\"}")));
     }
 }
