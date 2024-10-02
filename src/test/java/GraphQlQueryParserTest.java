@@ -9,7 +9,7 @@ import static org.hamcrest.Matchers.is;
 public class GraphQlQueryParserTest
 {
     @Test
-    public void When_One_Field_Selected_Then_Query_With_One_Field1()
+    public void when_oneLeafNodeSelected_then_queryWithOneNode()
     {
         final GetPostQuery getPostQuery = new GetPostQuery().selectPostId().endSelection();
         final String actualQuery = GraphQlQueryParser.parse(getPostQuery);
@@ -18,7 +18,7 @@ public class GraphQlQueryParserTest
     }
 
     @Test
-    public void When_More_Than_One_Field_Selected_Then_Query_With_More_Than_One_Field1()
+    public void when_moreThanOneLeafNodeSelected_then_queryWithMoreThanOneLeafNode()
     {
         final GetPostQuery getPostQuery = new GetPostQuery().selectPostId()
                 .selectPostTitle()
@@ -30,7 +30,7 @@ public class GraphQlQueryParserTest
     }
 
     @Test
-    public void When_One_Field_With_One_Child_Selected_Then_Query_With_One_Field_With_One_Child1()
+    public void when_oneSubtreeWithOneLeafNodeAsChildSelected_then_queryWithOneSubtreeWithOneLeafNodeAsChild()
     {
         final GetPostQuery getPostQuery = new GetPostQuery()
                 .fromComments()
@@ -43,7 +43,7 @@ public class GraphQlQueryParserTest
     }
 
     @Test
-    public void When_One_Field_With_More_Than_One_Child_Selected_Then_Query_With_One_Field_With_More_Than_One_Child1()
+    public void when_oneSubtreeWithOneSubtreeAsChildSelected_then_queryWithOneSubtreeWithOneSubtreeAsChild()
     {
         final GetPostQuery getPostQuery = new GetPostQuery()
                 .fromComments()
@@ -58,7 +58,7 @@ public class GraphQlQueryParserTest
     }
 
     @Test
-    public void When_One_Field_With_One_Descendant_Selected_Then_Query_With_One_Field_With_One_Descendant1()
+    public void when_oneSubtreeWithMoreThanOneLeafNodeAsChildrenSelected_then_queryWithOneSubtreeWithMoreThanOneLeafNodeAsChildren()
     {
         final GetPostQuery getPostQuery = new GetPostQuery()
                 .fromComments()
@@ -73,7 +73,7 @@ public class GraphQlQueryParserTest
     }
 
     @Test
-    public void When_One_Field_Without_Child_And_Other_One_With_One_Chield_Selected_Then_Query_With_One_Field_Without_Child_And_Other_One_With_One_Child1()
+    public void when_oneLeafNodeAndOneSubtreeSelected_then_queryWithOneLeafNodeAndOneSubtree()
     {
         final GetPostQuery getPostQuery = new GetPostQuery()
                 .selectPostId()
@@ -86,9 +86,8 @@ public class GraphQlQueryParserTest
         assertThat(actualQuery, is(equalTo("query{getPost{postId comments{commentsId}}}")));
     }
 
-    // selecionar todos
     @Test
-    public void When_First_And_Last_Fields_Each_Without_Children_Selected_Then_Query_With_First_And_Last_Fields_Each_Without_Children1()
+    public void when_allFieldsSelected_then_queryWithAllFields()
     {
         final GetPostQuery getPostQuery = new GetPostQuery()
                 .selectAllFields()
@@ -99,8 +98,7 @@ public class GraphQlQueryParserTest
     }
 
     @Test
-    // ultimo no folha
-    public void When_First_And_Last_Fields_Each_Without_Children_Selected_Then_Query_With_First_And_Last_Fields_Each_Without_Children11()
+    public void when_lastLeafNodeSelected_then_queryWithLastLeafNode ()
     {
         final GetPostQuery getPostQuery = new GetPostQuery()
                 .fromComments()
